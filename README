@@ -31,6 +31,19 @@ Example usage of the task in an Ant build file:
 
 Although all parameters are optional, the task supports various:
 
+   process  - flag that indicates if the input files should be processed at
+              all; there are 3 possible values:
+
+                 "yes" - the files must be processed by OptiPNG, if OptiPNG
+                         is unavailable, then this task will fail;
+
+                 "no"  - the files must not be processed by OptiPNG but must
+                         instead just be copied as-is, unchanged;
+
+                 "try" - if OptiPNG is available process the file(s), but if
+                         OptiPNG is unavailable, then just copy the files
+                         instead (in this case a warning will be output);
+
    dir      - the source directory, to read PNG image files from, defaults to
               the project base directory;
 
