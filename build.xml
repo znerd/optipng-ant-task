@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="minifypng-ant-task" default="all">
+<project name="optipng-ant-task" default="all">
 
 	<target name="-init" description="Common initialization">
 		<property name="sourcedir"           value="src" />
@@ -16,7 +16,7 @@
 		<property name="javac.outputdir"     value="${outputdir}/classes" />
 		<property name="javac.includes"      value="**/*.java" />
 		<property name="jar.filename"        value="${outputdir}/${ant.project.name}.jar" />
-		<property name="project.description" value="MinifyPNG Ant task" />
+		<property name="project.description" value="OptiPNG Ant task" />
 		<property name="project.vendor"      value="PensioenPage B.V." />
 		<loadfile property="project.version" srcfile="VERSION">
 			<filterchain>
@@ -47,10 +47,10 @@
 
 	<target name="unittests" depends="compile" description="Compiles and runs all unit tests">
 
-		<taskdef name="minifypng" classname="com.pensioenpage.jynx.minifypng.MinifyPNGTask" classpath="${javac.outputdir}" />
+		<taskdef name="optipng" classname="com.pensioenpage.jynx.optipng.OptiPNGTask" classpath="${javac.outputdir}" />
 
 		<mkdir dir="${unittests.outputdir}" />
-		<minifypng dir="${unittests.sourcedir}/input/" todir="${unittests.outputdir}" />
+		<optipng dir="${unittests.sourcedir}/input/" todir="${unittests.outputdir}" />
 
 		<property name="unittests.filename"      value="1.png"                                                 />
 		<property name="unittests.input.file"    value="${unittests.sourcedir}/input/${unittests.filename}"    />
