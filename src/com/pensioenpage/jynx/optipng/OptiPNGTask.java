@@ -206,6 +206,26 @@ public final class OptiPNGTask extends MatchingTask {
     */
    private long _timeOut;
 
+   /**
+    * Character string that indicates whether the files should be processed
+    * with OptiPNG at all. There are 3 options:
+    * <dl>
+    * <dt><code>"yes"</code> or <code>"true"</code>
+    * <dd>The files <em>must</em> be processed by OptiPNG.
+    *     If OptiPNG is unavailable, then this task fails.
+    *
+    * <dt><code>"no"</code> or <code>"false"</code>
+    * <dd>The files must <em>not</em> be processed by OptiPNG but must instead
+    *     just be copied as-is, unchanged.
+    *
+    * <dt><code>"try"</code>
+    * <dd>If OptiPNG is available process the file(s), but if OptiPNG is
+    *     unavailable, then just copy the files instead (in which case a
+    *     warning will be output).
+    * </dl>
+    */
+   private String _process;
+
    
    //-------------------------------------------------------------------------
    // Methods
@@ -257,6 +277,32 @@ public final class OptiPNGTask extends MatchingTask {
       _timeOut = timeOut;
    }
 
+   /**
+    * Sets whether the files should be processed with OptiPNG at all.
+    * There are 3 options:
+    * <dl>
+    * <dt><code>"yes"</code> or <code>"true"</code>
+    * <dd>The files <em>must</em> be processed by OptiPNG.
+    *     If OptiPNG is unavailable, then this task fails.
+    *
+    * <dt><code>"no"</code> or <code>"false"</code>
+    * <dd>The files must <em>not</em> be processed by OptiPNG but must instead
+    *     just be copied as-is, unchanged.
+    *
+    * <dt><code>"try"</code>
+    * <dd>If OptiPNG is available process the file(s), but if OptiPNG is
+    *     unavailable, then just copy the files instead (in which case a
+    *     warning will be output).
+    * </dl>
+    *
+    * @param s
+    *    the value, should be one of the allowed values (otherwise the task
+    *    will fail during execution).
+    */
+   public void setProcess(String s) {
+      _process = s;
+   }
+
    @Override
    public void execute() throws BuildException {
 
@@ -273,6 +319,19 @@ public final class OptiPNGTask extends MatchingTask {
       // Check the directories
       checkDir("Source directory",      _sourceDir,  true, false);
       checkDir("Destination directory",   _destDir, false,  true);
+
+      // Interpret the "process" option
+      ProcessOption processOption;
+      String p = (_process == null) ? null : _process.toLowerCase().trim();
+      if (p == null || "true".equals(p) || "yes".equals(p)) {
+         processOption = ProcessOption.YES;
+      } else if ("false".equals(_process) || "no".equals(_process)) {
+         processOption = ProcessOption.NO;
+      } else if ("try".equals(_process)) {
+         processOption = ProcessOption.TRY;
+      } else {
+         throw new BuildException("Invalid value for \"process\" option: " quote(_process) + '.');
+      }
 
       // Create a watch dog, if there is a time-out configured
       ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
@@ -385,5 +444,14 @@ public final class OptiPNGTask extends MatchingTask {
       } else {
          log("" + successCount + " file(s) optimized in " + duration + " ms; " + skippedCount + " unmodified file(s) skipped.");
       }
+   }
+
+
+   //-------------------------------------------------------------------------
+   // Inner classes
+   //-------------------------------------------------------------------------
+
+   private enum ProcessOption {
+      YES, NO, TRY;
    }
 }

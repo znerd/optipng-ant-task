@@ -35,10 +35,12 @@ Although all parameters are optional, the task supports various:
               all; there are 3 possible values:
 
                  "yes" - the files must be processed by OptiPNG, if OptiPNG
-                         is unavailable, then this task will fail;
+                         is unavailable, then this task will fail (alternative
+                         is "true");
 
                  "no"  - the files must not be processed by OptiPNG but must
-                         instead just be copied as-is, unchanged;
+                         instead just be copied as-is, unchanged (alternative
+                         is "false");
 
                  "try" - if OptiPNG is available process the file(s), but if
                          OptiPNG is unavailable, then just copy the files
