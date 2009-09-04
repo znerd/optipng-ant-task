@@ -1,0 +1,61 @@
+This is minifypng-ant-task, an Apache Ant task for optimizing PNG images.
+Under the hood this task uses (and requires) OptiPNG, see:
+
+   http://optipng.sourceforge.net/
+
+This Ant task has been tested with the following combination of software:
+
+   - J2SE 5.0 and Java SE 6 (source code uses Java 5-features)
+   - Ant 1.7.1
+   - OptiPNG 0.6.3
+
+This software is available under the terms of a BSD-style license, see
+the accompanied LICENSE file.
+
+This task comes as a collection of Java source files that can be built with Ant.
+Just run:
+
+   ant
+
+The result will be a JAR file:
+
+   build/minifypng-ant-task.jar
+
+Example usage of the task in an Ant build file:
+
+   <taskdef name="minifypng"
+       classname="com.pensioenpage.jynx.minifypng.MinifyPNGTask"
+       classpath="lib/minifypng-ant-task.jar" />
+
+   <minifypng dir="src/htdocs" todir="build/htdocs" />
+
+Although all parameters are optional, the task supports various:
+
+   dir      - the source directory, to read PNG image files from, defaults to
+              the project base directory;
+
+   todir    - the destination directory, to write the generated CSS files to,
+              defaults to the source directory;
+
+   command  - the command to execute, by default the task uses 'optipng';
+
+   timeOut  - the time-out in milliseconds for executing a single command,
+              defaults to 60000 (meaning 60 seconds);
+
+   includes - the files in the source directory to include, defaults to
+              '*.png';
+
+   excludes - the files to exclude, even if they are matched by the includes;
+
+and other parameters inherited from the MatchingTask, see:
+
+   http://ant.apache.org/manual/dirtasks.html
+
+If you want to file a bug report or a feature request, please do so here:
+
+   http://github.com/znerd/minifypng-ant-task/issues
+
+This software has been developed by:
+
+   Ernst de Haan      -  ernst@pensioenpage.com
+   PensioenPage B.V.  -  https://www.pensioenpage.com/
