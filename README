@@ -1,4 +1,4 @@
-This is minifypng-ant-task, an Apache Ant task for optimizing PNG images.
+This is optipng-ant-task, an Apache Ant task for optimizing PNG images.
 Under the hood this task uses (and requires) OptiPNG, see:
 
    http://optipng.sourceforge.net/
@@ -19,15 +19,15 @@ Just run:
 
 The result will be a JAR file:
 
-   build/minifypng-ant-task.jar
+   build/optipng-ant-task.jar
 
 Example usage of the task in an Ant build file:
 
-   <taskdef name="minifypng"
-       classname="com.pensioenpage.jynx.minifypng.MinifyPNGTask"
-       classpath="lib/minifypng-ant-task.jar" />
+   <taskdef name="optipng"
+       classname="com.pensioenpage.jynx.optipng.MinifyPNGTask"
+       classpath="lib/optipng-ant-task.jar" />
 
-   <minifypng dir="src/htdocs" todir="build/htdocs" />
+   <optipng dir="src/htdocs" todir="build/htdocs" />
 
 Although all parameters are optional, the task supports various:
 
@@ -53,7 +53,7 @@ and other parameters inherited from the MatchingTask, see:
 
 If you want to file a bug report or a feature request, please do so here:
 
-   http://github.com/znerd/minifypng-ant-task/issues
+   http://github.com/znerd/optipng-ant-task/issues
 
 This software has been developed by:
 

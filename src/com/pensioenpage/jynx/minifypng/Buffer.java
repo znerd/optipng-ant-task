@@ -1,5 +1,5 @@
 // Copyright 2007-2009, PensioenPage B.V.
-package com.pensioenpage.jynx.minifypng;
+package com.pensioenpage.jynx.optipng;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
