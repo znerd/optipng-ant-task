@@ -56,13 +56,21 @@
 		<property name="unittests.input.file"    value="${unittests.sourcedir}/input/${unittests.filename}"    />
 		<property name="unittests.expected.file" value="${unittests.sourcedir}/expected/${unittests.filename}" />
 		<property name="unittests.actual.file"   value="${unittests.outputdir}/${unittests.filename}"          />
-
-		<condition property="unittests.success">
+		<condition property="unittest1.success">
 			<filesmatch file1="${unittests.expected.file}" file2="${unittests.actual.file}" />
 		</condition>
-		<fail unless="unittests.success">
-			Expected output (in ${unittests.expected.file})
+		<fail unless="unittest1.success">
+			Unit test 1: Expected output (in ${unittests.expected.file})
 			differs from actual output (in ${unittests.actual.file}).
+		</fail>
+
+		<optipng dir="${unittests.sourcedir}/input/" todir="${unittests.outputdir}" process="no" />
+		<condition property="unittest2.success">
+			<filesmatch file1="${unittests.input.file}" file2="${unittests.actual.file}" />
+		</condition>
+		<fail unless="unittest2.success">
+			Unit test 2: Expected output (in ${unittests.input.file})
+			differs from original output (in ${unittests.actual.file}).
 		</fail>
 	</target>
 
