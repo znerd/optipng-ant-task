@@ -330,7 +330,7 @@ public final class OptiPNGTask extends MatchingTask {
       } else if ("try".equals(_process)) {
          processOption = ProcessOption.TRY;
       } else {
-         throw new BuildException("Invalid value for \"process\" option: " quote(_process) + '.');
+         throw new BuildException("Invalid value for \"process\" option: " + quote(_process) + '.');
       }
 
       // Create a watch dog, if there is a time-out configured
