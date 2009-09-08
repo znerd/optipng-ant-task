@@ -33,7 +33,7 @@ This will skip the execution of the available unit tests.
 Example usage of the task in an Ant build file:
 
    <taskdef name="optipng"
-       classname="com.pensioenpage.jynx.optipng.MinifyPNGTask"
+       classname="com.pensioenpage.jynx.optipng.OptiPNGTask"
        classpath="lib/optipng-ant-task.jar" />
 
    <optipng dir="src/htdocs" todir="build/htdocs" />
