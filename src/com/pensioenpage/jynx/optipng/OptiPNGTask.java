@@ -54,7 +54,6 @@ import org.apache.tools.ant.taskdefs.MatchingTask;
  * from {@link MatchingTask}. For more information, see
  * <a href="http://ant.apache.org/manual/dirtasks.html">the Ant site</a>.
  *
- * @version $Revision: 10190 $ $Date: 2009-08-25 17:49:35 +0200 (di, 25 aug 2009) $
  * @author <a href="mailto:ernst@pensioenpage.com">Ernst de Haan</a>
  */
 public final class OptiPNGTask extends MatchingTask {
@@ -212,16 +211,17 @@ public final class OptiPNGTask extends MatchingTask {
     * <dl>
     * <dt><code>"yes"</code> or <code>"true"</code>
     * <dd>The files <em>must</em> be processed by OptiPNG.
-    *     If OptiPNG is unavailable, then this task fails.
+    *     If at least one file could not be processed, for example because
+    *     OptiPNG is unavailable or because there are unrecoverable errors,
+    *     then this task fails.
     *
     * <dt><code>"no"</code> or <code>"false"</code>
     * <dd>The files must <em>not</em> be processed by OptiPNG but must instead
     *     just be copied as-is, unchanged.
     *
     * <dt><code>"try"</code>
-    * <dd>If OptiPNG is available process the file(s), but if OptiPNG is
-    *     unavailable, then just copy the files instead (in which case a
-    *     warning will be output).
+    * <dd>Attempt to process the file, but if that fails, then just copy the
+    *     original file instead.
     * </dl>
     */
    private String _process;
@@ -451,7 +451,28 @@ public final class OptiPNGTask extends MatchingTask {
    // Inner classes
    //-------------------------------------------------------------------------
 
+   /**
+    * Enumeration type for the different process options.
+    *
+    * @author <a href="mailto:ernst@pensioenpage.com">Ernst de Haan</a>
+    */
    private enum ProcessOption {
-      YES, NO, TRY;
+
+      /**
+       * Force processing with OptiPNG. If the OptiPNG command is not
+       * available, then fail.
+       */
+      YES,
+         
+      /**
+       * Skip OptiPNG processing completely. Just copy the files.
+       */
+      NO,
+
+      /**
+       * Try OptiPNG processing. If the processing fails, then copy the
+       * original file.
+       */
+      TRY;
    }
 }
