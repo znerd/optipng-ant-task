@@ -59,7 +59,7 @@
 			<attribute name="actual"   default="${unittests.outputdir}/@{testnum}.png"       />
 
 			<sequential>
-				<optipng dir="${unittests.sourcedir}" includes="@{testnum}.png" todir="${unittests.outputdir}" />
+				<optipng dir="${unittests.sourcedir}" includes="@{testnum}.png" todir="${unittests.outputdir}" process="@{process}" />
 				<condition property="test@{testnum}.success">
 					<filesmatch file1="@{expected}" file2="@{actual}" />
 				</condition>
