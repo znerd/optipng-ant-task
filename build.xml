@@ -45,7 +45,7 @@
 		</javac>
 	</target>
 
-	<target name="unittests" depends="compile" description="Compiles and runs all unit tests">
+	<target name="unittests" depends="compile" description="Runs all available unit tests">
 
 		<taskdef name="optipng" classname="com.pensioenpage.jynx.optipng.OptiPNGTask" classpath="${javac.outputdir}" />
 
