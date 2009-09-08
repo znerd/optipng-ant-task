@@ -12,14 +12,23 @@ This Ant task has been tested with the following combination of software:
 This software is available under the terms of a BSD-style license, see
 the accompanied LICENSE file.
 
-This task comes as a collection of Java source files that can be built with Ant.
-Just run:
+This task comes as a collection of Java source files that can be built with
+Ant. To compile the Java classes, run all available unit tests and build the
+JAR file run:
 
    ant
 
-The result will be a JAR file:
+Note that this already requires 'optipng' on the PATH. The result will be a
+JAR file:
 
    build/optipng-ant-task.jar
+
+If you don't have 'optipng' installed and still want to build the JAR file,
+just execute:
+
+   ant jar
+
+This will skip the execution of the available unit tests.
 
 Example usage of the task in an Ant build file:
 
