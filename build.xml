@@ -23,8 +23,8 @@
 				<striplinebreaks/>
 			</filterchain>
 		</loadfile>
-		<property name="unittests.sourcedir" value="${sourcedir}/testcases" />
-		<property name="unittests.outputdir" value="${outputdir}/testcases" />
+		<property name="unittests.sourcedir" value="${sourcedir}/unittests" />
+		<property name="unittests.outputdir" value="${outputdir}/unittests" />
 
 		<echo level="verbose" message="Project: ${ant.project.name} (&quot;${project.description}&quot;) version ${project.version}" />
 	</target>
@@ -62,15 +62,6 @@
 		<fail unless="unittest1.success">
 			Unit test 1: Expected output (in ${unittests.expected.file})
 			differs from actual output (in ${unittests.actual.file}).
-		</fail>
-
-		<optipng dir="${unittests.sourcedir}/input/" todir="${unittests.outputdir}" process="no" />
-		<condition property="unittest2.success">
-			<filesmatch file1="${unittests.input.file}" file2="${unittests.actual.file}" />
-		</condition>
-		<fail unless="unittest2.success">
-			Unit test 2: Expected output (in ${unittests.input.file})
-			differs from original output (in ${unittests.actual.file}).
 		</fail>
 	</target>
 
