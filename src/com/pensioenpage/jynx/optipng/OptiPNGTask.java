@@ -43,7 +43,7 @@ import org.apache.tools.ant.util.FileUtils;
  *
  * <dt>includes
  * <dd>The files to match in the source directory.
- *     Optional, defaults to <code>*.less</code>.
+ *     Optional, defaults to all files.
  *
  * <dt>excludes
  * <dd>The files to exclude, even if they are matched by the include filter.
@@ -244,7 +244,7 @@ public final class OptiPNGTask extends MatchingTask {
    //-------------------------------------------------------------------------
 
    /**
-    * The directory to read <code>.less</code> files from.
+    * The directory to read the image files from.
     * See {@link #setDir(File)}.
     */
    private File _sourceDir;
