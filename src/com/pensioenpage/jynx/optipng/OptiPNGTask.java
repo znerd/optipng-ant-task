@@ -17,6 +17,7 @@ import org.apache.tools.ant.taskdefs.Execute;
 import org.apache.tools.ant.taskdefs.ExecuteStreamHandler;
 import org.apache.tools.ant.taskdefs.ExecuteWatchdog;
 import org.apache.tools.ant.taskdefs.MatchingTask;
+import org.apache.tools.ant.types.FileSet;
 import org.apache.tools.ant.util.FileUtils;
 
 /**
@@ -93,6 +94,10 @@ public final class OptiPNGTask extends MatchingTask {
     */
    private static final String quote(String s) {
       return s == null ? "(null)" : "\"" + s + '"';
+   }
+
+   private static final String quote(Object o) {
+      return o == null ? "(null)" : quote(o.toString());
    }
 
    /**
@@ -240,7 +245,16 @@ public final class OptiPNGTask extends MatchingTask {
     *    the location of the source directory, or <code>null</code>.
     */
    public void setDir(File dir) {
+      log("Setting \"dir\" to: " + quote(dir) + '.', MSG_VERBOSE);
       _sourceDir = dir;
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   public void setIncludes(String includes) {
+      log("Setting \"includes\" to: " + quote(includes) + '.', MSG_VERBOSE);
+      super.setIncludes(includes);
    }
 
    /**
@@ -251,6 +265,7 @@ public final class OptiPNGTask extends MatchingTask {
     *    the location of the destination directory, or <code>null</code>.
     */
    public void setToDir(File dir) {
+      log("Setting \"toDir\" to: " + quote(dir) + '.', MSG_VERBOSE);
       _destDir = dir;
    }
 
@@ -263,6 +278,7 @@ public final class OptiPNGTask extends MatchingTask {
     *    can be <code>null</code> (in which case the task will find the command).
     */
    public void setCommand(String command) {
+      log("Setting \"command\" to: " + quote(command) + '.', MSG_VERBOSE);
       _command = command;
    }
 
@@ -276,6 +292,7 @@ public final class OptiPNGTask extends MatchingTask {
     *    should be applied.
     */
    public void setTimeOut(long timeOut) {
+      log("Setting \"timeOut\" to: " + timeOut + " ms.", MSG_VERBOSE);
       _timeOut = timeOut;
    }
 
@@ -302,6 +319,7 @@ public final class OptiPNGTask extends MatchingTask {
     *    will fail during execution).
     */
    public void setProcess(String s) {
+      log("Setting \"process\" to: " + quote(s) + '.', MSG_VERBOSE);
       _process = s;
    }
 
