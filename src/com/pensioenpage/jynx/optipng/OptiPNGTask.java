@@ -45,6 +45,10 @@ import org.apache.tools.ant.util.FileUtils;
  * <dd>The files to match in the source directory.
  *     Optional, defaults to all files.
  *
+ * <dt>overwrite
+ * <dd>Flag that can be used to force overwriting of existing newer files.
+ *     Optional, defaults to <em>false</em>.
+ *
  * <dt>excludes
  * <dd>The files to exclude, even if they are matched by the include filter.
  *     Optional, default is empty.
@@ -250,10 +254,16 @@ public final class OptiPNGTask extends MatchingTask {
    private File _sourceDir;
 
    /**
-    * The directory to write <code>.css</code> files to.
+    * The directory to write the PNG image files to.
     * See {@link #setToDir(File)}.
     */
    private File _destDir;
+
+   /**
+    * Flag that indicates if each existing file should always be overwritten,
+    * even if it is newer than the source file. Default is <code>false</code>.
+    */
+   private boolean _overwrite;
 
    /**
     * The command to execute. If unset, then this task will attempt to find a
@@ -314,6 +324,16 @@ public final class OptiPNGTask extends MatchingTask {
    public void setToDir(File dir) {
       log("Setting \"toDir\" to: " + quote(dir) + '.', MSG_VERBOSE);
       _destDir = dir;
+   }
+
+   /**
+    * Sets the <em>overwrite</em> flag.
+    *
+    * @param flag
+    *    the value for the flag.
+    */
+   public void setOverwrite(boolean flag) {
+      _overwrite = flag;
    }
 
    /**
@@ -425,8 +445,8 @@ public final class OptiPNGTask extends MatchingTask {
          }
 
          // Determine if the file type is supported
-         if (! matches(inFileName.toLowerCase(), "\\.(gif|bmp|png|pnm|tif|tiff)$")) {
-            log("Skipping " + quote(inFileName) + " because the file type is unsupported.", MSG_VERBOSE);
+         if (! matches(inFileName.toLowerCase(), "\\.png$")) {
+            log("Skipping " + quote(inFileName) + " because the file does not end in \".png\" (case-insensitive).", MSG_VERBOSE);
             skippedCount++;
             continue;
          }
@@ -439,7 +459,7 @@ public final class OptiPNGTask extends MatchingTask {
          String  inFilePath = inFile.getPath();
 
          // Skip this file is the output file exists and is newer
-         if (outFile.exists() && (outFile.lastModified() > inFile.lastModified())) {
+         if (!_overwrite && outFile.exists() && (outFile.lastModified() > inFile.lastModified())) {
             log("Skipping " + quote(inFileName) + " because output file is newer.", MSG_VERBOSE); 
             skippedCount++;
             continue;

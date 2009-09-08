@@ -40,36 +40,41 @@ Example usage of the task in an Ant build file:
 
 Although all parameters are optional, the task supports various:
 
-   process  - flag that indicates if the input files should be processed at
-              all; there are 3 possible values:
+   process   - flag that indicates if the input files should be processed at
+               all; there are 3 possible values:
 
-                 "yes" - the files must be processed by OptiPNG, if at least
-                         one file could not be processed, then this task will
-                         fail (alternative is "true");
+                  "yes" - the files must be processed by OptiPNG, if at least
+                          one file could not be processed, then this task will
+                          fail (alternative is "true");
 
-                 "no"  - the files must not be processed by OptiPNG but must
-                         instead just be copied as-is, unchanged (alternative
-                         is "false");
+                  "no"  - the files must not be processed by OptiPNG but must
+                          instead just be copied as-is, unchanged (alternative
+                          is "false");
 
-                 "try" - attempt to process all matching file(s), when a file
-                         fails to be processed, then copy the original file
-                         instead.
+                  "try" - attempt to process all matching file(s), when a file
+                          fails to be processed, then copy the original file
+                          instead.
 
-   dir      - the source directory, to read PNG image files from, defaults to
-              the project base directory;
+   dir       - the source directory, to read PNG image files from, defaults to
+               the project base directory;
 
-   todir    - the destination directory, to write the generated CSS files to,
+   todir     - the destination directory, to write the generated CSS files to,
               defaults to the source directory;
 
-   command  - the command to execute, by default the task uses 'optipng';
+   overwrite - when set this flag forces each existing output file to be
+               overwritten, even if it is newer than the respective source
+               file; defaults to 'no';
 
-   timeOut  - the time-out in milliseconds for executing a single command,
+   command   - the command to execute, by default the task uses 'optipng';
+
+   timeOut   - the time-out in milliseconds for executing a single command,
               defaults to 60000 (meaning 60 seconds);
 
-   includes - the files in the source directory to include, defaults to
-              '*.png';
+   includes  - the files in the source directory to include, defaults to all
+               files, although only those that end in '.png' will actually
+               be optimized or copied;
 
-   excludes - the files to exclude, even if they are matched by the includes;
+   excludes  - the files to exclude, even if they are matched by the includes;
 
 and other parameters inherited from the MatchingTask, see:
 
