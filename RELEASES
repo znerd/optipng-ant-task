@@ -2,6 +2,7 @@
 
 Implemented 'process' option.
 Fixed broken support for 'includes' parameter.
+Improved logging.
 Added 2nd unit test.
 
 
