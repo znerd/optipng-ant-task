@@ -41,7 +41,7 @@ Example usage of the task in an Ant build file:
 Although all parameters are optional, the task supports various:
 
    process   - flag that indicates if the input files should be processed at
-               all; there are 3 possible values:
+               all; there are 3 possible modes:
 
                   "yes" - the files must be processed by OptiPNG, if at least
                           one file could not be processed, then this task will
