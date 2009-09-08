@@ -342,6 +342,91 @@ public final class OptiPNGTask extends MatchingTask {
       // Test that the command is available
       boolean commandAvailable = testCommand(command, processOption);
 
+      // Attempt to transform all files
+      if (processOption != ProcessOption.MUST_NOT && commandAvailable) {
+         transformAll(command, processOption);
+
+      // Copy all files
+      } else {
+         copyAll(command, processOption);
+      }
+   }
+
+   private boolean testCommand(String command, ProcessOption processOption)
+   throws IllegalArgumentException, BuildException {
+
+      // Check preconditions
+      if (command == null) {
+         throw new IllegalArgumentException("command == null");
+      } else if (processOption == null) {
+         throw new IllegalArgumentException("processOption == null");
+      }
+
+      // Short-circuit if no command should be executed
+      if (processOption == ProcessOption.MUST_NOT) {
+         return false;
+      }
+
+      // Create a watch dog, if a time-out is configured
+      ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
+
+      // Check that the command is executable
+      Buffer    buffer = new Buffer();
+      Execute  execute = new Execute(buffer, watchdog);
+      String[] cmdline = new String[] { command, "-version" };
+      execute.setAntRun(getProject());
+      execute.setCommandline(cmdline);
+      Throwable caught;
+      try {
+         execute.execute();
+         caught = null;
+      } catch (Throwable e) {
+         caught = e;
+      }
+
+      // Executing the command triggered an exception
+      boolean commandAvailable;
+      if (caught != null) {
+         String message = "Unable to execute OptiPNG command " + quote(command) + '.';
+         if (processOption == ProcessOption.MUST) {
+            throw new BuildException(message, caught);
+         } else {
+            log(message, MSG_ERR);
+            commandAvailable = false;
+         }
+
+      // Executing the command resulted in a non-zero code, indicating failure
+      } else if (execute.getExitValue() != 0) {
+         String message = "Unable to execute OptiPNG command " + quote(command) + ". Running '" + command + " -v' resulted in exit code " + execute.getExitValue() + '.';
+         if (processOption == ProcessOption.MUST) {
+            throw new BuildException(message);
+         } else {
+            log(message, MSG_ERR);
+            commandAvailable = false;
+         }
+
+      // Command was executed successfully
+      } else {
+         Pattern pattern = Pattern.compile("^[^0-9]*([0-9]+(\\.[0-9]+)*)");
+         Matcher matcher = pattern.matcher(buffer.getOutString());
+         String  version = matcher.find() ? quote(matcher.group(1)) : "unknown";
+         log("Using command " + quote(command) + ", version is " + version + '.', MSG_VERBOSE);
+         commandAvailable = true;
+      }
+
+      return commandAvailable;
+   }
+
+   private void transformAll(String command, ProcessOption processOption)
+   throws IllegalArgumentException, BuildException {
+
+      // Check preconditions
+      if (command == null) {
+         throw new IllegalArgumentException("command == null");
+      } else if (processOption == null) {
+         throw new IllegalArgumentException("processOption == null");
+      }
+
       // Preparations done, consider each individual file for processing
       log("Transforming from " + _sourceDir.getPath() + " to " + _destDir.getPath() + '.', MSG_VERBOSE);
       long start = System.currentTimeMillis();
@@ -427,7 +512,7 @@ public final class OptiPNGTask extends MatchingTask {
       }
    }
 
-   private boolean testCommand(String command, ProcessOption processOption)
+   private void copyAll(String command, ProcessOption processOption)
    throws IllegalArgumentException, BuildException {
 
       // Check preconditions
@@ -437,59 +522,7 @@ public final class OptiPNGTask extends MatchingTask {
          throw new IllegalArgumentException("processOption == null");
       }
 
-      // Short-circuit if no command should be executed
-      if (processOption == ProcessOption.MUST_NOT) {
-         return false;
-      }
-
-      // Create a watch dog, if a time-out is configured
-      ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
-
-      // Check that the command is executable
-      Buffer    buffer = new Buffer();
-      Execute  execute = new Execute(buffer, watchdog);
-      String[] cmdline = new String[] { command, "-version" };
-      execute.setAntRun(getProject());
-      execute.setCommandline(cmdline);
-      Throwable caught;
-      try {
-         execute.execute();
-         caught = null;
-      } catch (Throwable e) {
-         caught = e;
-      }
-
-      // Executing the command triggered an exception
-      boolean commandAvailable;
-      if (caught != null) {
-         String message = "Unable to execute OptiPNG command " + quote(command) + '.';
-         if (processOption == ProcessOption.MUST) {
-            throw new BuildException(message, caught);
-         } else {
-            log(message, MSG_ERR);
-            commandAvailable = false;
-         }
-
-      // Executing the command resulted in a non-zero code, indicating failure
-      } else if (execute.getExitValue() != 0) {
-         String message = "Unable to execute OptiPNG command " + quote(command) + ". Running '" + command + " -v' resulted in exit code " + execute.getExitValue() + '.';
-         if (processOption == ProcessOption.MUST) {
-            throw new BuildException(message);
-         } else {
-            log(message, MSG_ERR);
-            commandAvailable = false;
-         }
-
-      // Command was executed successfully
-      } else {
-         Pattern pattern = Pattern.compile("^[^0-9]*([0-9]+(\\.[0-9]+)*)");
-         Matcher matcher = pattern.matcher(buffer.getOutString());
-         String  version = matcher.find() ? quote(matcher.group(1)) : "unknown";
-         log("Using command " + quote(command) + ", version is " + version + '.', MSG_VERBOSE);
-         commandAvailable = true;
-      }
-
-      return commandAvailable;
+      // TODO
    }
 
 
