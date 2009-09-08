@@ -59,7 +59,7 @@ Although all parameters are optional, the task supports various:
                the project base directory;
 
    todir     - the destination directory, to write the generated CSS files to,
-              defaults to the source directory;
+               defaults to the source directory;
 
    overwrite - when set this flag forces each existing output file to be
                overwritten, even if it is newer than the respective source
@@ -68,7 +68,7 @@ Although all parameters are optional, the task supports various:
    command   - the command to execute, by default the task uses 'optipng';
 
    timeOut   - the time-out in milliseconds for executing a single command,
-              defaults to 60000 (meaning 60 seconds);
+               defaults to 60000 (meaning 60 seconds);
 
    includes  - the files in the source directory to include, defaults to all
                files, although only those that end in '.png' will actually
