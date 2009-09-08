@@ -1,6 +1,7 @@
 ---- VERSION 0.2 (September 7, 2009) -----------------------------------------
 
 Implemented 'process' option.
+Implemented 'overwrite' option.
 Fixed broken support for 'includes' parameter.
 Improved logging.
 Added 2nd unit test.
