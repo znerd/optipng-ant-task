@@ -17,6 +17,7 @@ import org.apache.tools.ant.taskdefs.Execute;
 import org.apache.tools.ant.taskdefs.ExecuteStreamHandler;
 import org.apache.tools.ant.taskdefs.ExecuteWatchdog;
 import org.apache.tools.ant.taskdefs.MatchingTask;
+import org.apache.tools.ant.util.FileUtils;
 
 /**
  * An Apache Ant task for optimizing a number of PNG files, using OptiPNG. For
@@ -342,13 +343,120 @@ public final class OptiPNGTask extends MatchingTask {
       // Test that the command is available
       boolean commandAvailable = testCommand(command, processOption);
 
-      // Attempt to transform all files
-      if (processOption != ProcessOption.MUST_NOT && commandAvailable) {
-         transformAll(command, processOption);
+      // Determine if transformation should be attempted at all
+      // (alternative is just copying)
+      boolean transform = processOption != ProcessOption.MUST_NOT && commandAvailable;
 
-      // Copy all files
+      // Consider each individual file for processing/copying
+      log("Transforming from " + _sourceDir.getPath() + " to " + _destDir.getPath() + '.', MSG_VERBOSE);
+      long start = System.currentTimeMillis();
+      int failedCount = 0, optimizeCount = 0, copyCount = 0, skippedCount = 0;
+      for (String inFileName : getDirectoryScanner(_sourceDir).getIncludedFiles()) {
+
+         // Make sure the input file exists
+         File inFile = new File(_sourceDir, inFileName);
+         if (! inFile.exists()) {
+            continue;
+         }
+
+         // Some preparations related to the input file and output file
+         long     thisStart = System.currentTimeMillis();
+         String outFileName = inFile.getName().replaceFirst("\\.[a-zA-Z]+$", ".png");
+         File       outFile = new File(_destDir, outFileName);
+         String outFilePath = outFile.getPath();
+         String  inFilePath = inFile.getPath();
+
+         // Skip this file is the output file exists and is newer
+         if (outFile.exists() && (outFile.lastModified() > inFile.lastModified())) {
+            log("Skipping " + quote(inFileName) + " because output file is newer.", MSG_VERBOSE); 
+            skippedCount++;
+            continue;
+
+         // Skip each empty file
+         } else if (inFile.length() < 1L) {
+            log("Skipping " + quote(inFileName) + " because the file is completely empty.", MSG_VERBOSE); 
+            skippedCount++;
+            continue;
+         }
+
+         // File transformation (optimization) should be attempted
+         boolean copy = !transform;
+         if (transform) {
+
+            // Prepare for the command execution
+            Buffer            buffer = new Buffer();
+            ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
+            Execute          execute = new Execute(buffer, watchdog);
+            String[]         cmdline = new String[] { command, "-fix", "-force", "-out", outFilePath, "--", inFilePath };
+
+            execute.setAntRun(getProject());
+            execute.setCommandline(cmdline);
+
+            // Execute the command
+            boolean failure;
+            try {
+               execute.execute();
+               failure = execute.isFailure();
+            } catch (IOException cause) {
+               failure = true;
+            }
+
+            // Output to stderr indicates a failure
+            String errorOutput = buffer.getErrString();
+            failure            = failure ? true : ! isEmpty(errorOutput);
+
+            // A non-existent or empty file also indicate failure
+            if (! failure) {
+               if (! outFile.exists()) {
+                  failure     = true;
+                  errorOutput = "Output file not created.";
+               } else if (outFile.length() < 1L) {
+                  failure     = true;
+                  errorOutput = "Generated output file is empty.";
+               }
+            }
+
+            // Log the result for this individual file
+            long thisDuration = System.currentTimeMillis() - thisStart;
+            if (failure) {
+               String logMessage = "Failed to optimize " + quote(inFilePath);
+               if (isEmpty(errorOutput)) {
+                  logMessage += '.';
+               } else {
+                  logMessage += ": " + errorOutput;
+               }
+               log(logMessage, MSG_ERR);
+               failedCount++;
+
+               // Failed, but then instead copy the input file unchanged
+               if (processOption != ProcessOption.MUST) {
+                  copy = true;
+               }
+            } else {
+               log("Optimized " + quote(inFileName) + " in " + thisDuration + " ms.", MSG_VERBOSE);
+               optimizeCount++;
+            }
+         }
+
+         // Copy the file?
+         if (copy) {
+            try {
+               FileUtils.getFileUtils().copyFile(inFile, outFile);
+               copyCount++;
+            } catch (Throwable cause) {
+               String logMessage = "Failed to copy " + quote(inFilePath) + " to " + quote(outFilePath) + '.';
+               log(logMessage, MSG_ERR);
+               failedCount++;
+            }
+         }
+      }
+
+      // Log the total result
+      long duration = System.currentTimeMillis() - start;
+      if (failedCount > 0) {
+         throw new BuildException("" + failedCount + " file(s) failed to be optimized and/or copied; " + optimizeCount + " file(s) optimized; " + copyCount + " file(s) copied unchanged; " + skippedCount + " unmodified file(s) skipped. Total duration is " + duration + " ms.");
       } else {
-         copyAll(command, processOption);
+         log("" + optimizeCount + " file(s) optimized and " + copyCount + " file(s) copied unchanged in " + duration + " ms; " + skippedCount + " unmodified file(s) skipped.");
       }
    }
 
@@ -415,114 +523,6 @@ public final class OptiPNGTask extends MatchingTask {
       }
 
       return commandAvailable;
-   }
-
-   private void transformAll(String command, ProcessOption processOption)
-   throws IllegalArgumentException, BuildException {
-
-      // Check preconditions
-      if (command == null) {
-         throw new IllegalArgumentException("command == null");
-      } else if (processOption == null) {
-         throw new IllegalArgumentException("processOption == null");
-      }
-
-      // Preparations done, consider each individual file for processing
-      log("Transforming from " + _sourceDir.getPath() + " to " + _destDir.getPath() + '.', MSG_VERBOSE);
-      long start = System.currentTimeMillis();
-      int failedCount = 0, successCount = 0, skippedCount = 0;
-      for (String inFileName : getDirectoryScanner(_sourceDir).getIncludedFiles()) {
-
-         // Make sure the input file exists
-         File inFile = new File(_sourceDir, inFileName);
-         if (! inFile.exists()) {
-            continue;
-         }
-
-         // Some preparations related to the input file and output file
-         long     thisStart = System.currentTimeMillis();
-         String outFileName = inFile.getName().replaceFirst("\\.[a-zA-Z]+$", ".png");
-         File       outFile = new File(_destDir, outFileName);
-         String outFilePath = outFile.getPath();
-         String  inFilePath = inFile.getPath();
-
-         // Skip this file is the output file exists and is newer
-         if (outFile.exists() && (outFile.lastModified() > inFile.lastModified())) {
-            log("Skipping " + quote(inFileName) + " because output file is newer.", MSG_VERBOSE); 
-            skippedCount++;
-            continue;
-         }
-
-         // Prepare for the command execution
-         Buffer            buffer = new Buffer();
-         ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
-         Execute          execute = new Execute(buffer, watchdog);
-         String[]         cmdline = new String[] { command, "-fix", "-force", "-out", outFilePath, "--", inFilePath };
-
-         execute.setAntRun(getProject());
-         execute.setCommandline(cmdline);
-
-         // Execute the command
-         boolean failure;
-         try {
-            execute.execute();
-            failure = execute.isFailure();
-         } catch (IOException cause) {
-            failure = true;
-         }
-
-         // Output to stderr indicates a failure
-         String errorOutput = buffer.getErrString();
-         failure            = failure ? true : ! isEmpty(errorOutput);
-
-         // A non-existent or empty file also indicate failure
-         if (! failure) {
-            if (! outFile.exists()) {
-               failure     = true;
-               errorOutput = "Output file not created.";
-            } else if (outFile.length() < 1L) {
-               failure     = true;
-               errorOutput = "Output file is empty.";
-            }
-         }
-
-         // Log the result for this individual file
-         long thisDuration = System.currentTimeMillis() - thisStart;
-         if (failure) {
-            String logMessage = "Failed to optimize " + quote(inFilePath);
-            if (isEmpty(errorOutput)) {
-               logMessage += '.';
-            } else {
-               logMessage += ": " + errorOutput;
-            }
-            log(logMessage);
-            failedCount++;
-         } else {
-            log("Optimized " + quote(inFileName) + " in " + thisDuration + " ms.", MSG_VERBOSE);
-            successCount++;
-         }
-      }
-
-      // Log the total result
-      long duration = System.currentTimeMillis() - start;
-      if (failedCount > 0) {
-         throw new BuildException("" + failedCount + " file(s) failed to optimize, while " + successCount + " succeeded. Total duration is " + duration + " ms.");
-      } else {
-         log("" + successCount + " file(s) optimized in " + duration + " ms; " + skippedCount + " unmodified file(s) skipped.");
-      }
-   }
-
-   private void copyAll(String command, ProcessOption processOption)
-   throws IllegalArgumentException, BuildException {
-
-      // Check preconditions
-      if (command == null) {
-         throw new IllegalArgumentException("command == null");
-      } else if (processOption == null) {
-         throw new IllegalArgumentException("processOption == null");
-      }
-
-      // TODO
    }
 
 
