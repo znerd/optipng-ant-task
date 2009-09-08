@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.Project;
+import static org.apache.tools.ant.Project.MSG_ERR;
 import static org.apache.tools.ant.Project.MSG_VERBOSE;
 import org.apache.tools.ant.taskdefs.Execute;
 import org.apache.tools.ant.taskdefs.ExecuteStreamHandler;
@@ -324,42 +325,22 @@ public final class OptiPNGTask extends MatchingTask {
       ProcessOption processOption;
       String p = (_process == null) ? null : _process.toLowerCase().trim();
       if (p == null || "true".equals(p) || "yes".equals(p)) {
-         processOption = ProcessOption.YES;
+         processOption = ProcessOption.MUST;
       } else if ("false".equals(_process) || "no".equals(_process)) {
-         processOption = ProcessOption.NO;
+         processOption = ProcessOption.MUST_NOT;
       } else if ("try".equals(_process)) {
-         processOption = ProcessOption.TRY;
+         processOption = ProcessOption.SHOULD;
       } else {
          throw new BuildException("Invalid value for \"process\" option: " + quote(_process) + '.');
       }
-
-      // Create a watch dog, if there is a time-out configured
-      ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
 
       // Determine what command to execute
       String command = (_command == null || _command.length() < 1)
                      ? DEFAULT_COMMAND
                      : _command;
 
-      // Check that the command is executable
-      Buffer    buffer = new Buffer();
-      Execute  execute = new Execute(buffer, watchdog);
-      String[] cmdline = new String[] { command, "-version" };
-      execute.setAntRun(getProject());
-      execute.setCommandline(cmdline);
-      try {
-         if (execute.execute() != 0) {
-            throw new BuildException("Unable to execute OptiPNG command " + quote(command) + ". Running '" + command + " -v' resulted in exit code " + execute.getExitValue() + '.');
-         }
-      } catch (IOException cause) {
-         throw new BuildException("Unable to execute OptiPNG command " + quote(command) + '.', cause);
-      }
-
-      // Display the command and version number
-      Pattern pattern = Pattern.compile("^[^0-9]*([0-9]+(\\.[0-9]+)*)");
-      Matcher matcher = pattern.matcher(buffer.getOutString());
-      String  version = matcher.find() ? quote(matcher.group(1)) : "unknown";
-      log("Using command " + quote(command) + ", version is " + version + '.', MSG_VERBOSE);
+      // Test that the command is available
+      boolean commandAvailable = testCommand(command, processOption);
 
       // Preparations done, consider each individual file for processing
       log("Transforming from " + _sourceDir.getPath() + " to " + _destDir.getPath() + '.', MSG_VERBOSE);
@@ -388,10 +369,10 @@ public final class OptiPNGTask extends MatchingTask {
          }
 
          // Prepare for the command execution
-         buffer   = new Buffer();
-         watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
-         execute  = new Execute(buffer, watchdog);
-         cmdline  = new String[] { command, "-fix", "-force", "-out", outFilePath, "--", inFilePath };
+         Buffer            buffer = new Buffer();
+         ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
+         Execute          execute = new Execute(buffer, watchdog);
+         String[]         cmdline = new String[] { command, "-fix", "-force", "-out", outFilePath, "--", inFilePath };
 
          execute.setAntRun(getProject());
          execute.setCommandline(cmdline);
@@ -446,6 +427,71 @@ public final class OptiPNGTask extends MatchingTask {
       }
    }
 
+   private boolean testCommand(String command, ProcessOption processOption)
+   throws IllegalArgumentException, BuildException {
+
+      // Check preconditions
+      if (command == null) {
+         throw new IllegalArgumentException("command == null");
+      } else if (processOption == null) {
+         throw new IllegalArgumentException("processOption == null");
+      }
+
+      // Short-circuit if no command should be executed
+      if (processOption == ProcessOption.MUST_NOT) {
+         return false;
+      }
+
+      // Create a watch dog, if a time-out is configured
+      ExecuteWatchdog watchdog = (_timeOut > 0L) ? new ExecuteWatchdog(_timeOut) : null;
+
+      // Check that the command is executable
+      Buffer    buffer = new Buffer();
+      Execute  execute = new Execute(buffer, watchdog);
+      String[] cmdline = new String[] { command, "-version" };
+      execute.setAntRun(getProject());
+      execute.setCommandline(cmdline);
+      Throwable caught;
+      try {
+         execute.execute();
+         caught = null;
+      } catch (Throwable e) {
+         caught = e;
+      }
+
+      // Executing the command triggered an exception
+      boolean commandAvailable;
+      if (caught != null) {
+         String message = "Unable to execute OptiPNG command " + quote(command) + '.';
+         if (processOption == ProcessOption.MUST) {
+            throw new BuildException(message, caught);
+         } else {
+            log(message, MSG_ERR);
+            commandAvailable = false;
+         }
+
+      // Executing the command resulted in a non-zero code, indicating failure
+      } else if (execute.getExitValue() != 0) {
+         String message = "Unable to execute OptiPNG command " + quote(command) + ". Running '" + command + " -v' resulted in exit code " + execute.getExitValue() + '.';
+         if (processOption == ProcessOption.MUST) {
+            throw new BuildException(message);
+         } else {
+            log(message, MSG_ERR);
+            commandAvailable = false;
+         }
+
+      // Command was executed successfully
+      } else {
+         Pattern pattern = Pattern.compile("^[^0-9]*([0-9]+(\\.[0-9]+)*)");
+         Matcher matcher = pattern.matcher(buffer.getOutString());
+         String  version = matcher.find() ? quote(matcher.group(1)) : "unknown";
+         log("Using command " + quote(command) + ", version is " + version + '.', MSG_VERBOSE);
+         commandAvailable = true;
+      }
+
+      return commandAvailable;
+   }
+
 
    //-------------------------------------------------------------------------
    // Inner classes
@@ -462,17 +508,17 @@ public final class OptiPNGTask extends MatchingTask {
        * Force processing with OptiPNG. If the OptiPNG command is not
        * available, then fail.
        */
-      YES,
+      MUST,
          
       /**
        * Skip OptiPNG processing completely. Just copy the files.
        */
-      NO,
+      MUST_NOT,
 
       /**
        * Try OptiPNG processing. If the processing fails, then copy the
        * original file.
        */
-      TRY;
+      SHOULD;
    }
 }
