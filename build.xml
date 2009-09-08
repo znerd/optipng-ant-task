@@ -23,8 +23,9 @@
 				<striplinebreaks/>
 			</filterchain>
 		</loadfile>
-		<property name="unittests.sourcedir" value="${sourcedir}/unittests" />
-		<property name="unittests.outputdir" value="${outputdir}/unittests" />
+		<property name="unittests.sourcedir"   value="${sourcedir}/unittests/input"    />
+		<property name="unittests.expecteddir" value="${sourcedir}/unittests/expected" />
+		<property name="unittests.outputdir"   value="${outputdir}/unittests"          />
 
 		<echo level="verbose" message="Project: ${ant.project.name} (&quot;${project.description}&quot;) version ${project.version}" />
 	</target>
@@ -50,19 +51,24 @@
 		<taskdef name="optipng" classname="com.pensioenpage.jynx.optipng.OptiPNGTask" classpath="${javac.outputdir}" />
 
 		<mkdir dir="${unittests.outputdir}" />
-		<optipng dir="${unittests.sourcedir}/input/" todir="${unittests.outputdir}" />
 
-		<property name="unittests.filename"      value="1.png"                                                 />
-		<property name="unittests.input.file"    value="${unittests.sourcedir}/input/${unittests.filename}"    />
-		<property name="unittests.expected.file" value="${unittests.sourcedir}/expected/${unittests.filename}" />
-		<property name="unittests.actual.file"   value="${unittests.outputdir}/${unittests.filename}"          />
-		<condition property="unittest1.success">
-			<filesmatch file1="${unittests.expected.file}" file2="${unittests.actual.file}" />
-		</condition>
-		<fail unless="unittest1.success">
-			Unit test 1: Expected output (in ${unittests.expected.file})
-			differs from actual output (in ${unittests.actual.file}).
-		</fail>
+		<macrodef name="unittest">
+			<attribute name="testnum" />
+			<attribute name="process" />
+			<attribute name="expected" default="${unittests.expecteddir}/@{testnum}.png" />
+			<attribute name="actual"   default="${unittests.outputdir}/@{testnum}.png"       />
+
+			<sequential>
+				<optipng dir="${unittests.sourcedir}" includes="@{testnum}.png" todir="${unittests.outputdir}" />
+				<condition property="test@{testnum}.success">
+					<filesmatch file1="@{expected}" file2="@{actual}" />
+				</condition>
+				<fail unless="test@{testnum}.success">Output file "@{actual}" differs from what was expected: "@{expected}".</fail>
+			</sequential>
+		</macrodef>
+
+		<unittest testnum="1" process="true"  />
+		<unittest testnum="2" process="false" />
 	</target>
 
 	<target name="jar" depends="compile">
