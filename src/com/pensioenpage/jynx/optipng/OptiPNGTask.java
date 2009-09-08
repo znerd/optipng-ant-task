@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
@@ -96,8 +97,62 @@ public final class OptiPNGTask extends MatchingTask {
       return s == null ? "(null)" : "\"" + s + '"';
    }
 
+   /**
+    * Returns a quoted version string representation,
+    * or <code>"(null)"</code> if the argument is <code>null</code>.
+    *
+    * @param o
+    *    the object, can be <code>null</code>.
+    *
+    * @return
+    *    the quoted string representation of the specified object,
+    *    e.g. <code>"\"foo bar\""</code>,
+    *    or <code>"(null)"</code> if the argument is <code>null</code>.
+    */
    private static final String quote(Object o) {
       return o == null ? "(null)" : quote(o.toString());
+   }
+
+   /**
+    * Determines if the specified character string matches the regular
+    * expression.
+    *
+    * @param s
+    *    the string to research, or <code>null</code>.
+    *
+    * @param regex
+    *    the regular expression, cannot be <code>null</code>.
+    *
+    * @return
+    *    <code>true</code> if <code>s</em> matches the regular expression;
+    *    <code>false</code> if it does not.
+    *
+    * @throws IllegalArgumentException
+    *    if <code>regex == null</code> or if it has an invalid syntax. 
+    */
+   private static final boolean matches(String s, String regex)
+   throws IllegalArgumentException {
+
+      // Check preconditions
+      if (regex == null) {
+         throw new IllegalArgumentException("regex == null");
+      }
+
+      // Compile the regular expression pattern
+      Pattern pattern;
+      try {
+         pattern = Pattern.compile(regex);
+      } catch (PatternSyntaxException cause) {
+         throw new IllegalArgumentException("Invalid regular expression \"" + regex + "\".", cause);
+      }
+
+      // Short-circuit if the string is null
+      if (s == null) {
+         return false;
+      }
+
+      // Find a match
+      return pattern.matcher(s).find();
    }
 
    /**
@@ -180,7 +235,7 @@ public final class OptiPNGTask extends MatchingTask {
     * Constructs a new <code>OptiPNGTask</code> object.
     */
    public OptiPNGTask() {
-      setIncludes("*.png");
+      // empty
    }
 
 
@@ -247,14 +302,6 @@ public final class OptiPNGTask extends MatchingTask {
    public void setDir(File dir) {
       log("Setting \"dir\" to: " + quote(dir) + '.', MSG_VERBOSE);
       _sourceDir = dir;
-   }
-
-   /**
-    * {@inheritDoc}
-    */
-   public void setIncludes(String includes) {
-      log("Setting \"includes\" to: " + quote(includes) + '.', MSG_VERBOSE);
-      super.setIncludes(includes);
    }
 
    /**
@@ -377,9 +424,16 @@ public final class OptiPNGTask extends MatchingTask {
             continue;
          }
 
+         // Determine if the file type is supported
+         if (! matches(inFileName.toLowerCase(), "\\.(gif|bmp|png|pnm|tif|tiff)$")) {
+            log("Skipping " + quote(inFileName) + " because the file type is unsupported.", MSG_VERBOSE);
+            skippedCount++;
+            continue;
+         }
+
          // Some preparations related to the input file and output file
          long     thisStart = System.currentTimeMillis();
-         String outFileName = inFile.getName().replaceFirst("\\.[a-zA-Z]+$", ".png");
+         String outFileName = inFileName.replaceFirst("\\.[a-zA-Z]+$", ".png");
          File       outFile = new File(_destDir, outFileName);
          String outFilePath = outFile.getPath();
          String  inFilePath = inFile.getPath();
@@ -460,6 +514,8 @@ public final class OptiPNGTask extends MatchingTask {
          if (copy) {
             try {
                FileUtils.getFileUtils().copyFile(inFile, outFile);
+               long thisDuration = System.currentTimeMillis() - thisStart;
+               log("Copied " + quote(inFileName) + " in " + thisDuration + " ms.", MSG_VERBOSE);
                copyCount++;
             } catch (Throwable cause) {
                String logMessage = "Failed to copy " + quote(inFilePath) + " to " + quote(outFilePath) + '.';
@@ -472,9 +528,9 @@ public final class OptiPNGTask extends MatchingTask {
       // Log the total result
       long duration = System.currentTimeMillis() - start;
       if (failedCount > 0) {
-         throw new BuildException("" + failedCount + " file(s) failed to be optimized and/or copied; " + optimizeCount + " file(s) optimized; " + copyCount + " file(s) copied unchanged; " + skippedCount + " unmodified file(s) skipped. Total duration is " + duration + " ms.");
+         throw new BuildException("" + failedCount + " file(s) failed to be optimized and/or copied; " + optimizeCount + " file(s) optimized; " + copyCount + " file(s) copied; " + skippedCount + " file(s) skipped. Total duration is " + duration + " ms.");
       } else {
-         log("" + optimizeCount + " file(s) optimized and " + copyCount + " file(s) copied unchanged in " + duration + " ms; " + skippedCount + " unmodified file(s) skipped.");
+         log("" + optimizeCount + " file(s) optimized and " + copyCount + " file(s) copied in " + duration + " ms; " + skippedCount + " file(s) skipped.");
       }
    }
 
