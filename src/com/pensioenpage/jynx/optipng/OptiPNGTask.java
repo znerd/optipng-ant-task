@@ -518,11 +518,12 @@ public final class OptiPNGTask extends MatchingTask {
                   logMessage += ": " + errorOutput;
                }
                log(logMessage, MSG_ERR);
-               failedCount++;
 
                // Failed, but then instead copy the input file unchanged
                if (processOption != ProcessOption.MUST) {
                   copy = true;
+               } else {
+                  failedCount++;
                }
             } else {
                log("Optimized " + quote(inFileName) + " in " + thisDuration + " ms.", MSG_VERBOSE);
